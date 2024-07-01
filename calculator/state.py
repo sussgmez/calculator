@@ -68,13 +68,16 @@ class BinomialFormState(rx.State):
         if x <= n:
             self.result1 = str( '%.5f' % binom.pmf(x, n, p))
 
-            self.x1 = int(n/2-sqrt(n/2)*4)
+            self.x1 = int(n/(1/p)-sqrt(n/(1/p))*2)
+            #self.x1 = 0
             if self.form_data['x1'] != '': self.x1 = int(self.form_data['x1'])
             if self.x1<0: self.x1 = 0
 
-            self.x2 = int(n/2+sqrt(n/2)*4)
+            self.x2 = int(n/(1/p)+sqrt(n/(1/p))*2)
+            #self.x2 = n + 1 
             if self.form_data['x2'] != '': self.x2 = int(self.form_data['x2'])
-            
+            if self.x2>n: self.x2 = n + 1
+
             for i in range(x + 1, n + 1): self.result2 += binom.pmf(i, n, p)
             self.result2 = str( '%.5f' % self.result2)
 
