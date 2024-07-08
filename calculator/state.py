@@ -1,181 +1,354 @@
 import reflex as rx
-from scipy.stats import binom, poisson 
-from math import sqrt
+import numpy as np
+from scipy.stats import binom, poisson, hypergeom, norm
 
-class State(rx.State):
-    binomial_display = 'none'
-    poisson_display = 'none'
-    hypergeometric_display = 'none'
 
-    def show_binomial(self):
-        self.binomial_display = 'block'
-        self.poisson_display = 'none'
-        self.hypergeometric_display = 'none'
-        
-        
-    def show_poisson(self):
-        self.binomial_display = 'none'
-        self.poisson_display = 'block'
-        self.hypergeometric_display = 'none'
-    
-    def show_hypergeometric(self):
-        self.binomial_display = 'none'
-        self.poisson_display = 'none'
-        self.hypergeometric_display = 'block'
-    
-    
+class MainState(rx.State):
+    selected_distribution: int
 
-class BinomialFormState(rx.State):
-    """
-        result1: x=x
-        result2: x>x
-        result3: x<x
-        result4: x>=x
-        result5: x<=x
-        result6: x<x<x
-        result7: x<=x<=x
-    """
-    form_data: dict = {}
+    def change_distribution(self, i): self.selected_distribution = i
 
-    result1: float
-    result2: float
-    result3: float
-    result4: float
-    result5: float
-    result6: float
-    result7: float
 
-    m: int
+class BinomialState(rx.State):
+    data: dict = {}
+    chart_data: list
+
+    n: int
+    p: float
+    x: int
+    x1: int
     x2: int
+
+    show_x1_x2: bool
+
+    error_message: str
+
+    d1: float
+    d2 = ""
+    d3 = ""
+    d4 = ""
+    d5 = ""
+    d6 = ""
+    d7 = ""
+
+    def handle_submit(self, data: dict):
+        self.data = data
+        self.chart_data = []
+
+        self.show_x1_x2 = False
+
+        self.n = 0
+        self.p = 0
+        self.x = 0
+
+        self.d1 = 0
+
+        self.d2 = 0
+        self.d3 = 0
+
+        self.d4 = 0
+        self.d5 = 0
+
+        self.d6 = 0
+        self.d7 = 0
+
+        if int(self.data['x']) <= int(self.data['n']):
+            self.error_message = ''
+
+            self.n = int(self.data['n'])
+            self.p = float(self.data['p'])
+            self.x = int(self.data['x'])
+
+            self.d1 = str( '%.5f' % binom.pmf(self.x, self.n, self.p))
+
+            i = int(self.n * self.p)
+            while binom.pmf(i, self.n, self.p) > 0.000001: i -= 1
+            i += 1
+
+            while binom.pmf(i, self.n, self.p) > 0.000001:
+                if i >= self.x + 1: self.d2 += binom.pmf(i, self.n, self.p)
+                if i <= self.x - 1: self.d3 += binom.pmf(i, self.n, self.p)
+                if i >= self.x: self.d4 += binom.pmf(i, self.n, self.p)
+                if i <= self.x: self.d5 += binom.pmf(i, self.n, self.p)
+
+                d = {'x':i, 'p':binom.pmf(i, self.n, self.p)}
+                self.chart_data.append(d)
+
+                i += 1
+                
+            self.d2 = str( '%.5f' % self.d2)
+            self.d3 = str( '%.5f' % self.d3)
+            self.d4 = str( '%.5f' % self.d4)
+            self.d5 = str( '%.5f' % self.d5)
+
+
+            if self.data['x1'] != '' and self.data['x2'] != '':
+
+                self.x1 = int(self.data['x1']) 
+                self.x2 = int(self.data['x2'])
+
+                if self.x1 <= self.x and self.x1 >= 0:
+                    if self.x2 >= self.x and  self.x2 <= self.n:
+                        for i in range(self.x1, self.x2): self.d6 += binom.pmf(i, self.n, self.p)
+                        self.d6 = str( '%.5f' % self.d6)
+
+                        for i in range(self.x1, self.x2 + 1): self.d7 += binom.pmf(i, self.n, self.p)
+                        self.d7 = str( '%.5f' % self.d7)
+
+                        self.show_x1_x2 = True
+                    else: self.error_message = 'El valor de xⱼ debe estar entre ({}, {})'.format(self.x, self.n)
+                else: self.error_message = 'El valor de xᵢ debe estar entre (0, {})'.format(self.x)
+
+            self.chart_data = []
+
+            i = self.n * self.p
+            while binom.pmf(i, self.n, self.p) > 0.000001: i-=1
+            
+            i += 1
+            while binom.pmf(i, self.n, self.p) > 0.000001:
+                d = {'x':i, 'p':binom.pmf(i, self.n, self.p)}
+                self.chart_data.append(d)
+                i+=1
+                    
+        else: 
+            self.error_message = 'El valor de x debe ser menor o igual que n.'
+
+    def set_null(self): self.reset()
     
-    data = []
-    bar_color:str
 
-    def handle_submit(self, form_data: dict):
-        self.form_data = form_data
-        x = int(self.form_data['x'])
-        n = int(self.form_data['n'])
-        p = float(self.form_data['p'])
+class PoissonState(rx.State):
+    data: dict = {}
+    chart_data = []
 
-        self.result1 = 0
-        self.result2 = 0
-        self.result3 = 0
-        self.result4 = 0
-        self.result5 = 0
-        self.result6 = 0
-        self.result7 = 0
-
-        if x <= n:
-            self.result1 = str( '%.5f' % binom.pmf(x, n, p))
-
-            self.x1 = int(n/(1/p)-sqrt(n/(1/p))*2)
-            #self.x1 = 0
-            if self.form_data['x1'] != '': self.x1 = int(self.form_data['x1'])
-            if self.x1<0: self.x1 = 0
-
-            self.x2 = int(n/(1/p)+sqrt(n/(1/p))*2)
-            #self.x2 = n + 1 
-            if self.form_data['x2'] != '': self.x2 = int(self.form_data['x2'])
-            if self.x2>n: self.x2 = n + 1
-
-            for i in range(x + 1, n + 1): self.result2 += binom.pmf(i, n, p)
-            self.result2 = str( '%.5f' % self.result2)
-
-            for i in range(0, x): self.result3 += binom.pmf(i, n, p)
-            self.result3 = str( '%.5f' % self.result3)
-
-            for i in range(x, n + 1): self.result4 += binom.pmf(i, n, p)
-            self.result4 = str( '%.5f' % self.result4)
-
-            for i in range(0, x + 1): self.result5 += binom.pmf(i, n, p)
-            self.result5 = str( '%.5f' % self.result5)
-
-            for i in range(self.m, self.x2): self.result6 += binom.pmf(i, n, p)
-            self.result6 = str( '%.5f' % self.result6)
-            
-            for i in range(self.m, self.x2 + 1): self.result7 += binom.pmf(i, n, p)
-            self.result7 = str( '%.5f' % self.result7)
-
-            r_values = range(self.x1, self.x2)
-            
-            self.data = []
-
-            for r in r_values:
-                d = {'name':r, 'vl':binom.pmf(r, n, p)}
-                self.data.append(d)
-
-
-class PoissonFormState(rx.State):
-    """
-        result1: x=x
-        result2: x>x
-        result3: x<x
-        result4: x>=x
-        result5: x<=x
-        result6: x<x<x
-        result7: x<=x<=x
-    """
-    form_data: dict = {}
-
-    result1: float
-    result2: float
-    result3: float
-    result4: float
-    result5: float
-    result6: float
-    result7: float
-
-    m: int
+    l: int
+    x: int
+    x1: int
     x2: int
-    
-    data = []
-    bar_color:str
 
-    def handle_submit(self, form_data: dict):
-        self.form_data = form_data
-        x = int(self.form_data['x'])
-        p = float(self.form_data['p'])
+    show_x1_x2: bool
 
-        self.result1 = 0
-        self.result2 = 0
-        self.result3 = 0
-        self.result4 = 0
-        self.result5 = 0
-        self.result6 = 0
-        self.result7 = 0
+    error_message: str
 
-        self.result1 = str( '%.5f' % poisson.pmf(x, p))
+    d1: float
+    d2 = ""
+    d3 = ""
+    d4 = ""
+    d5 = ""
+    d6 = ""
+    d7 = ""
 
-        self.x1 = int(p-sqrt(p)*6)
-        if self.form_data['x1'] != '': self.x1 = int(self.form_data['x1'])
-        if self.x1<0: self.x1 = 0
+    def handle_submit(self, data: dict):
+        self.data = data
+        self.chart_data = []
 
-        self.x2 = int(p+sqrt(p)*6)
-        if self.form_data['x2'] != '': self.x2 = int(self.form_data['x2'])
+        self.show_x1_x2 = False
 
-        for i in range(x + 1, x*2): self.result2 += poisson.pmf(i, p)
-        self.result2 = str( '%.5f' % self.result2)
+        self.l = 0
+        self.x = 0
 
-        for i in range(0, x): self.result3 += poisson.pmf(i, p)
-        self.result3 = str( '%.5f' % self.result3)
+        self.d1 = 0
 
-        for i in range(x, x*2): self.result4 += poisson.pmf(i, p)
-        self.result4 = str( '%.5f' % self.result4)
+        self.d2 = 0
+        self.d3 = 0
 
-        for i in range(0, x + 1): self.result5 += poisson.pmf(i, p)
-        self.result5 = str( '%.5f' % self.result5)
+        self.d4 = 0
+        self.d5 = 0
 
-        for i in range(self.x1, self.x2 + 1): self.result6 += poisson.pmf(i, p)
-        self.result6 = str( '%.5f' % self.result6)
+        self.d6 = 0
+        self.d7 = 0
+
+        self.error_message = ''
+
+        self.l = float(self.data['l'])
+        self.x = int(self.data['x'])
+
+        self.d1 = str( '%.5f' % poisson.pmf(self.x, self.l))
         
-        for i in range(self.x1, self.x2): self.result7 += poisson.pmf(i, p)
-        self.result7 = str( '%.5f' % self.result7)
+        i = self.l
+        while poisson.pmf(i, self.l) > 0.000001: i -= 1
+        i += 1
 
-        r_values = range(self.x1, self.x2)
+        while poisson.pmf(i, self.l) > 0.000001:
+            if i >= self.x + 1: self.d2 += poisson.pmf(i, self.l)
+            if i <= self.x - 1: self.d3 += poisson.pmf(i, self.l)
+            if i >= self.x: self.d4 += poisson.pmf(i, self.l)
+            if i <= self.x: self.d5 += poisson.pmf(i, self.l)
 
-        self.data = []
+            d = {'x':i, 'p':poisson.pmf(i, self.l)}
+            self.chart_data.append(d)
 
-        for r in r_values:
-            d = {'name':r, 'vl':poisson.pmf(r, p)}
-            self.data.append(d)
+            i += 1
 
+        self.d2 = str( '%.5f' % self.d2)
+        self.d3 = str( '%.5f' % self.d3)
+        self.d4 = str( '%.5f' % self.d4)
+        self.d5 = str( '%.5f' % self.d5)
+
+
+        if self.data['x1'] != '' and self.data['x2'] != '':
+            self.x1 = int(self.data['x1']) 
+            self.x2 = int(self.data['x2'])
+
+            if self.x1 <= self.x and self.x1 >= 0:
+                if self.x2 >= self.x:
+                    for i in range(self.x1, self.x2): self.d6 += poisson.pmf(i, self.l)
+                    self.d6 = str( '%.5f' % self.d6)
+                    
+                    for i in range(self.x1, self.x2 + 1): self.d7 += poisson.pmf(i, self.l)
+                    self.d7 = str( '%.5f' % self.d7)
+
+                    self.show_x1_x2 = True
+                else: self.error_message = 'El valor de xⱼ debe ser mayor o igual que {}'.format(self.x)
+            else: self.error_message = 'El valor de xᵢ debe estar entre (0, {})'.format(self.x)
+
+    def set_null(self): self.reset()        
+
+
+class HypergeometricState(rx.State):
+    data: dict = {}
+    chart_data = []
+
+    n: int
+    N: int
+    M: int
+    x: int
+    x1: int
+    x2: int
+
+    show_x1_x2: bool
+
+    error_message: str
+
+    d1: float
+    d2 = ""
+    d3 = ""
+    d4 = ""
+    d5 = ""
+    d6 = ""
+    d7 = ""
+
+    def handle_submit(self, data: dict):
+        self.data = data
+        self.chart_data = [] 
+
+        self.show_x1_x2 = False
+
+        self.d1 = 0
+
+        self.d2 = 0
+        self.d3 = 0
+
+        self.d4 = 0
+        self.d5 = 0
+
+        self.d6 = 0
+        self.d7 = 0
+
+        self.error_message = ''
+
+        self.n = int(self.data['n'])
+        self.N = int(self.data['N'])
+        self.M = int(self.data['M'])
+        self.x = int(self.data['x'])
+        
+        if self.n <= self.N and self.M <= self.N:
+
+            self.d1 = str( '%.5f' % hypergeom.pmf(self.x, self.N, self.M, self.n)) 
+
+            i = int(hypergeom.mean(self.N, self.M, self.n))
+            while hypergeom.pmf(i, self.N, self.M, self.n) > 0.000001: i -= 1
+            i += 1
+
+            while hypergeom.pmf(i, self.N, self.M, self.n) > 0.000001:
+                if i >= self.x + 1: self.d2 += hypergeom.pmf(i, self.N, self.M, self.n)
+                if i <= self.x - 1: self.d3 += hypergeom.pmf(i, self.N, self.M, self.n)
+                if i >= self.x: self.d4 += hypergeom.pmf(i, self.N, self.M, self.n)
+                if i <= self.x: self.d5 += hypergeom.pmf(i, self.N, self.M, self.n)
+
+                d = {'x':i, 'p': hypergeom.pmf(i, self.N, self.M, self.n)}
+                self.chart_data.append(d)
+
+                i += 1
+
+            self.d2 = str( '%.5f' % self.d2)
+            self.d3 = str( '%.5f' % self.d3)
+            self.d4 = str( '%.5f' % self.d4)
+            self.d5 = str( '%.5f' % self.d5)
+
+
+            if self.data['x1'] != '' and self.data['x2'] != '':
+                self.x1 = int(self.data['x1']) 
+                self.x2 = int(self.data['x2'])
+
+                if self.x1 <= self.x and self.x1 >= 0:
+                    if self.x2 >= self.x:
+                        for i in range(self.x1, self.x2): self.d6 += hypergeom.pmf(i, self.N, self.M, self.n)
+                        self.d6 = str( '%.5f' % self.d6)
+                        
+                        for i in range(self.x1, self.x2 + 1): self.d7 += hypergeom.pmf(i, self.N, self.M, self.n)
+                        self.d7 = str( '%.5f' % self.d7)
+
+                        self.show_x1_x2 = True
+                    else: self.error_message = 'El valor de xⱼ debe ser mayor o igual que {}'.format(self.x)
+                else: self.error_message = 'El valor de xᵢ debe estar entre (0, {})'.format(self.x)
+
+        else: self.error_message = 'El valor de n y el valor M deben estar entre (0, {})'.format(self.N)
+
+    def set_null(self): self.reset()
+ 
+ 
+class NormalState(rx.State):
+    data: dict = {}
+
+    m: float
+    d: float
+    x: float
+    x1: float
+    x2: float
+
+    show_x1_x2: bool
+
+    error_message: str
+
+    d1: float
+    d2 = ""
+    d3 = ""
+    d4 = ""
+    d5 = ""
+    d6 = ""
+    d7 = ""
+
+    def handle_submit(self, data: dict):
+        self.data = data
+
+        self.show_x1_x2 = False
+
+        self.m = 0
+        self.d = 0
+        self.x = 0
+        self.x1 = 0
+        self.x2 = 0
+
+        self.d1 = 0
+
+        self.d2 = 0
+        self.d3 = 0
+
+        self.d4 = 0
+        self.d5 = 0
+
+        self.d6 = 0
+        self.d7 = 0
+
+        self.error_message = ''
+
+        self.m = float(self.data['m'])
+        self.d = float(self.data['d'])
+        self.x = float(self.data['x'])
+
+        self.d1 = str('%.5f' % norm.pdf(self.x, self.m, self.d))
+        self.d2 = str('%.5f' % (1 - norm.cdf(self.x, self.m, self.d)))
+        self.d3 = str('%.5f' % norm.cdf(self.x, self.m, self.d))
+
+    def set_null(self): self.reset()
+        
