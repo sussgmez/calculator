@@ -75,7 +75,7 @@ class BinomialState(rx.State):
                 self.chart_data.append(d)
 
                 i += 1
-                
+
             self.d2 = str( '%.5f' % self.d2)
             self.d3 = str( '%.5f' % self.d3)
             self.d4 = str( '%.5f' % self.d4)
@@ -89,7 +89,7 @@ class BinomialState(rx.State):
 
                 if self.x1 <= self.x and self.x1 >= 0:
                     if self.x2 >= self.x and  self.x2 <= self.n:
-                        for i in range(self.x1, self.x2): self.d6 += binom.pmf(i, self.n, self.p)
+                        for i in range(self.x1 + 1, self.x2): self.d6 += binom.pmf(i, self.n, self.p)
                         self.d6 = str( '%.5f' % self.d6)
 
                         for i in range(self.x1, self.x2 + 1): self.d7 += binom.pmf(i, self.n, self.p)
@@ -99,19 +99,8 @@ class BinomialState(rx.State):
                     else: self.error_message = 'El valor de xⱼ debe estar entre ({}, {})'.format(self.x, self.n)
                 else: self.error_message = 'El valor de xᵢ debe estar entre (0, {})'.format(self.x)
 
-            self.chart_data = []
-
-            i = self.n * self.p
-            while binom.pmf(i, self.n, self.p) > 0.000001: i-=1
-            
-            i += 1
-            while binom.pmf(i, self.n, self.p) > 0.000001:
-                d = {'x':i, 'p':binom.pmf(i, self.n, self.p)}
-                self.chart_data.append(d)
-                i+=1
                     
-        else: 
-            self.error_message = 'El valor de x debe ser menor o igual que n.'
+        else: self.error_message = 'El valor de x debe ser menor o igual que n.'
 
     def set_null(self): self.reset()
     
@@ -191,7 +180,7 @@ class PoissonState(rx.State):
 
             if self.x1 <= self.x and self.x1 >= 0:
                 if self.x2 >= self.x:
-                    for i in range(self.x1, self.x2): self.d6 += poisson.pmf(i, self.l)
+                    for i in range(self.x1 + 1, self.x2): self.d6 += poisson.pmf(i, self.l)
                     self.d6 = str( '%.5f' % self.d6)
                     
                     for i in range(self.x1, self.x2 + 1): self.d7 += poisson.pmf(i, self.l)
@@ -282,7 +271,7 @@ class HypergeometricState(rx.State):
 
                 if self.x1 <= self.x and self.x1 >= 0:
                     if self.x2 >= self.x:
-                        for i in range(self.x1, self.x2): self.d6 += hypergeom.pmf(i, self.N, self.M, self.n)
+                        for i in range(self.x1 + 1, self.x2): self.d6 += hypergeom.pmf(i, self.N, self.M, self.n)
                         self.d6 = str( '%.5f' % self.d6)
                         
                         for i in range(self.x1, self.x2 + 1): self.d7 += hypergeom.pmf(i, self.N, self.M, self.n)
@@ -298,6 +287,12 @@ class HypergeometricState(rx.State):
  
  
 class NormalState(rx.State):
+    """
+    P(X>xi)
+    P(X<xi)
+    P(xi<x<xj)
+    """
+
     data: dict = {}
 
     m: float
