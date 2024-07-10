@@ -305,13 +305,9 @@ class NormalState(rx.State):
 
     error_message: str
 
-    d1: float
     d2 = ""
     d3 = ""
-    d4 = ""
-    d5 = ""
     d6 = ""
-    d7 = ""
 
     def handle_submit(self, data: dict):
         self.data = data
@@ -324,16 +320,10 @@ class NormalState(rx.State):
         self.x1 = 0
         self.x2 = 0
 
-        self.d1 = 0
-
         self.d2 = 0
         self.d3 = 0
 
-        self.d4 = 0
-        self.d5 = 0
-
         self.d6 = 0
-        self.d7 = 0
 
         self.error_message = ''
 
@@ -341,9 +331,26 @@ class NormalState(rx.State):
         self.d = float(self.data['d'])
         self.x = float(self.data['x'])
 
-        self.d1 = str('%.5f' % norm.pdf(self.x, self.m, self.d))
         self.d2 = str('%.5f' % (1 - norm.cdf(self.x, self.m, self.d)))
         self.d3 = str('%.5f' % norm.cdf(self.x, self.m, self.d))
+
+        self.d6 = str('%.5f' % (norm.cdf(self.x, self.m, self.d)))
+        
+        if self.data['x1'] != '' and self.data['x2'] != '':
+
+            self.x1 = float(self.data['x1']) 
+            self.x2 = float(self.data['x2'])
+            
+            if self.x1 <= self.x:
+                if self.x2 >= self.x:
+
+                    self.d6 = str('%.5f' % (norm.cdf(self.x2, self.m, self.d) - norm.cdf(self.x1, self.m, self.d)))
+
+                    self.show_x1_x2 = True
+                else: self.error_message = 'El valor de xⱼ debe ser mayor o igual que {}'.format(self.x)
+            else: self.error_message = 'El valor de xᵢ debe ser menor o igual que {}'.format(self.x)
+
+
 
     def set_null(self): self.reset()
         

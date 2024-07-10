@@ -10,7 +10,7 @@ def selector() -> rx.Component:
             rx.button('Binomial', class_name='btn-selector', on_click=lambda: [MainState.change_distribution(1), BinomialState.set_null()]),
             rx.button('De Poisson', class_name='btn-selector', on_click=lambda: [MainState.change_distribution(2), PoissonState.set_null()]),
             rx.button('Hipergeométrica', class_name='btn-selector', on_click=lambda: [MainState.change_distribution(3), HypergeometricState.set_null()]),
-            rx.button('Normal', class_name='btn-selector', on_click=lambda: MainState.change_distribution(4)),
+            rx.button('Normal', class_name='btn-selector', on_click=lambda: [MainState.change_distribution(4), NormalState.set_null()]),
             class_name='btns-selector'
         ),
         class_name='selector'
@@ -309,27 +309,27 @@ def normal() -> rx.Component:
             rx.box(
                 rx.box(
                     rx.text('µ', class_name='l-input'),
-                    rx.input(class_name='input', type='number', name='m', required=True, custom_attrs={'step':'0.001', 'min':0}),
+                    rx.input(class_name='input', type='number', name='m', required=True, custom_attrs={'step':'0.001'}),
                     class_name='box-input',
                 ),
                 rx.box(
                     rx.text('σ', class_name='l-input'),
-                    rx.input(class_name='input', type='number', name='d', required=True, custom_attrs={'step':'0.001', 'min':0}),
+                    rx.input(class_name='input', type='number', name='d', required=True, custom_attrs={'step':'0.001'}),
                     class_name='box-input'
                 ),
                 rx.box(
                     rx.text('x', class_name='l-input'),
-                    rx.input(class_name='input', type='number', name='x', required=True, custom_attrs={'step':'0.001', 'min':0}),
+                    rx.input(class_name='input', type='number', name='x', required=True, custom_attrs={'step':'0.001'}),
                     class_name='box-input'
                 ),
                 rx.box(
                     rx.text('xᵢ', class_name='l-input'),
-                    rx.input(class_name='input', type='number', name='x1', custom_attrs={'min':0}),
+                    rx.input(class_name='input', type='number', name='x1', custom_attrs={'step':'0.001'}),
                     class_name='box-input'
                 ),
                 rx.box(
                     rx.text('xⱼ', class_name='l-input'),
-                    rx.input(class_name='input', type='number', name='x2', custom_attrs={'min':0}),
+                    rx.input(class_name='input', type='number', name='x2', custom_attrs={'step':'0.001'}),
                     class_name='box-input'
                 ),
                 rx.button('Calcular'),
@@ -341,12 +341,6 @@ def normal() -> rx.Component:
         rx.text('Resultados', class_name='p-distribution'),
         rx.box(
             rx.box(
-                rx.text(rx.cond(NormalState.x > 0, 'P({})'.format(NormalState.x), 'P(x)'), class_name='l-result'),
-                rx.input(class_name='result', read_only=True, value=NormalState.d1),
-                class_name='box-result',
-            ),
-            rx.separator(style={'width':'100%'}),
-            rx.box(
                 rx.text('P(x > {})'.format(NormalState.x), class_name='l-result'),
                 rx.input(class_name='result', read_only=True, value=NormalState.d2),
                 class_name='box-result'
@@ -355,6 +349,14 @@ def normal() -> rx.Component:
                 rx.text('P(x < {})'.format(NormalState.x), class_name='l-result'),
                 rx.input(class_name='result', read_only=True, value=NormalState.d3),
                 class_name='box-result'
+            ),
+            rx.cond(
+                NormalState.show_x1_x2,
+                rx.box(
+                    rx.text('P({} < x < {})'.format(NormalState.x1, NormalState.x2), class_name='l-result'),
+                    rx.input(class_name='result', read_only=True, value=NormalState.d6),
+                    class_name='box-result'
+                ),
             ),
             class_name='results-distribution'
         ),
