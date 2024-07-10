@@ -87,6 +87,7 @@ style = {
     '.p-error': {
         'color': 'rgb(199,119,117)',
     },
+    
     '.chart': {
         'max_width':'600px',
         'margin':'auto'
