@@ -360,6 +360,19 @@ def normal() -> rx.Component:
             ),
             class_name='results-distribution'
         ),
+        rx.recharts.line_chart(
+            rx.recharts.line(
+                data_key='p', 
+                stroke='#82ca9d',
+                type_='monotone'
+            ),
+            rx.recharts.x_axis(data_key='x'),
+            rx.recharts.y_axis(),
+            data=NormalState.chart_data,
+            height=400,
+            width="100%",
+            class_name='chart'
+        ),
     )
 
 def calculator() -> rx.Component:

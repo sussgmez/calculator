@@ -294,6 +294,7 @@ class NormalState(rx.State):
     """
 
     data: dict = {}
+    chart_data = []
 
     m: float
     d: float
@@ -311,6 +312,8 @@ class NormalState(rx.State):
 
     def handle_submit(self, data: dict):
         self.data = data
+        
+        self.chart_data = [] 
 
         self.show_x1_x2 = False
 
@@ -335,7 +338,11 @@ class NormalState(rx.State):
         self.d3 = str('%.5f' % norm.cdf(self.x, self.m, self.d))
 
         self.d6 = str('%.5f' % (norm.cdf(self.x, self.m, self.d)))
-        
+
+        for i in range(-8, 9):
+            d = {'x':str('%.2f' % (self.m+self.d*i/2)), 'p': norm.pdf(self.m+self.d*i, self.m, self.d)}
+            self.chart_data.append(d)
+
         if self.data['x1'] != '' and self.data['x2'] != '':
 
             self.x1 = float(self.data['x1']) 
@@ -349,8 +356,6 @@ class NormalState(rx.State):
                     self.show_x1_x2 = True
                 else: self.error_message = 'El valor de xⱼ debe ser mayor o igual que {}'.format(self.x)
             else: self.error_message = 'El valor de xᵢ debe ser menor o igual que {}'.format(self.x)
-
-
 
     def set_null(self): self.reset()
         
