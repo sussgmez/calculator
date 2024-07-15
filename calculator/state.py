@@ -1,5 +1,4 @@
 import reflex as rx
-import numpy as np
 from scipy.stats import binom, poisson, hypergeom, norm
 
 

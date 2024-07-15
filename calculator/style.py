@@ -1,4 +1,7 @@
 style = {
+    'button': {
+        'cursor':'pointer',
+    },
     '.h-calculator': {
         'margin-bottom': '20px'
     },
@@ -13,7 +16,7 @@ style = {
     '.btns-selector': {
         'display': 'grid',
         'grid-template-columns': '1fr 1fr',
-        'gap':'4px'
+        'gap':'4px',
     },
     '.selector': {
         'margin-bottom': '20px'

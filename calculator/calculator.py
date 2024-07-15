@@ -47,7 +47,7 @@ def binomial() -> rx.Component:
                     rx.input(class_name='input', type='number', name='x2', custom_attrs={'min':0}),
                     class_name='box-input'
                 ),
-                rx.button('Calcular'),
+                rx.button('Calcular', color_scheme="grass"),
                 class_name='inputs-distribution'
             ),
             on_submit=BinomialState.handle_submit,
@@ -137,7 +137,7 @@ def poisson() -> rx.Component:
                     rx.input(class_name='input', type='number', name='x2', custom_attrs={'min':0}),
                     class_name='box-input'
                 ),
-                rx.button('Calcular'),
+                rx.button('Calcular', color_scheme="grass"),
                 class_name='inputs-distribution'
             ),
             on_submit=PoissonState.handle_submit,
@@ -237,7 +237,7 @@ def hypergeometric() -> rx.Component:
                     rx.input(class_name='input', type='number', name='x2', custom_attrs={'min':0}),
                     class_name='box-input'
                 ),
-                rx.button('Calcular'),
+                rx.button('Calcular', color_scheme="grass"),
                 class_name='inputs-distribution'
             ),
             on_submit=HypergeometricState.handle_submit,
@@ -332,7 +332,7 @@ def normal() -> rx.Component:
                     rx.input(class_name='input', type='number', name='x2', custom_attrs={'step':'0.001'}),
                     class_name='box-input'
                 ),
-                rx.button('Calcular'),
+                rx.button('Calcular', color_scheme="grass"),
                 class_name='inputs-distribution'
             ),
             on_submit=NormalState.handle_submit,
